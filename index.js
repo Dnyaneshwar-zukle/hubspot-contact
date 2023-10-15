@@ -25,50 +25,92 @@ app.get("/", async (req, res) => {
   }
 });
 
-// Handle form submission and update data in HubSpot
-app.get('/update', async (req, res) => {
-    // http://localhost:3000/update?email=rick@crowbars.net
-    const email = req.query.email;
+app.get("/update", (req, res) => {
+  res.render("update", {
+    userEmail: "example@email.com",
+    favoriteBook: "Example Book",
+  });
+});
 
+// Handle form submission and update data in HubSpot
+app.get("/update", async (req, res) => {
+  const email = req.query.email;
+  const getContact = `https://api.hubapi.com/crm/v3/objects/contacts/${email}?idProperty=email&properties=email,favorite_book`;
+  const headers = {
+    Authorization: `Bearer ${PRIVATE_APP_ACCESS}`,
+    "Content-Type": "application/json",
+  };
+
+  try {
+    const response = await axios.get(getContact, { headers });
+    const data = response.data;
+    res.render("update", {
+      userEmail: data.properties.email,
+      favoriteBook: data.properties.favorite_book,
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+app.get("/update", async (req, res) => {
+  const email = req.query.email;
+
+  // Check if an email parameter is provided in the URL
+  if (email) {
+    // Fetch the contact data for the provided email
     const getContact = `https://api.hubapi.com/crm/v3/objects/contacts/${email}?idProperty=email&properties=email,favorite_book`;
     const headers = {
-        Authorization: `Bearer ${PRIVATE_APP_ACCESS}`,
-        'Content-Type': 'application/json'
+      Authorization: `Bearer ${PRIVATE_APP_ACCESS}`,
+      "Content-Type": "application/json",
     };
 
     try {
-        const response = await axios.get(getContact, { headers });
-        const data = response.data;
-
-        // res.json(data);
-        res.render('update', {userEmail: data.properties.email, favoriteBook: data.properties.favorite_book});
-        
-    } catch(err) {
-        console.error(err);
+      const response = await axios.get(getContact, { headers });
+      const data = response.data;
+      res.render("update", {
+        userEmail: data.properties.email,
+        favoriteBook: data.properties.favorite_book,
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).send("Internal Server Error");
     }
+  } else {
+    // Handle the case where no email parameter is provided
+    res.render("update", { userEmail: "", favoriteBook: "" });
+  }
 });
 
-app.post('/update', async (req, res) => {
-    const update = {
-        properties: {
-            "favorite_book": req.body.newVal
-        }
-    }
+app.post("/update", async (req, res) => {
+  const email = req.body.email;
+  const newVal = req.body.newVal;
 
-    const email = req.query.email;
-    const updateContact = `https://api.hubapi.com/crm/v3/objects/contacts/${email}?idProperty=email`;
-    const headers = {
-        Authorization: `Bearer ${PRIVATE_APP_ACCESS}`,
-        'Content-Type': 'application/json'
-    };
+  // Check if an email is provided in the form data
+  // if (email) {
+  //   // Proceed with the update
+  //   const update = {
+  //     properties: {
+  //       favorite_book: newVal,
+  //     },
+  //   };
 
-    try { 
-        await axios.patch(updateContact, update, { headers } );
-        res.redirect('back');
-    } catch(err) {
-        console.error(err);
-    }
+  //   const updateContact = `https://api.hubapi.com/crm/v3/objects/contacts/${email}?idProperty=email`;
+  //   const headers = {
+  //     Authorization: `Bearer ${PRIVATE_APP_ACCESS}`,
+  //     "Content-Type": "application/json",
+  //   };
 
+  //   try {
+  //     await axios.patch(updateContact, update, { headers });
+  //     res.redirect("/");
+  //   } catch (err) {
+  //     console.error(err);
+  //     res.status(500).send("Internal Server Error");
+  //   }
+  // } else {
+  //   res.status(400).send("Email is required for the update.");
+  // }
 });
 
 app.listen(3000, () => {
