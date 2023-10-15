@@ -1,0 +1,22 @@
+doctype html
+html 
+  head 
+    title= `${title}`
+    meta(name="viewport" content="width=device-width, initial-scale=1")
+    link(rel="stylesheet", href="/style.css")
+  body 
+    br
+    br
+    a(href='/contacts') Add/Update This Table
+    br
+    br
+    table(style='width:100%', border='1')
+      tr
+        th Name
+        th Publisher
+        th Prise
+      each contact in data  
+        tr
+          td #{contact.properties.firstname} #{contact.properties.lastname}
+          td Adam
+          td 25
